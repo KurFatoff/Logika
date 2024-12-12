@@ -1,14 +1,14 @@
 ﻿#define _CRT_SECURE_NO_WARNINGS
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cstdlib>
+#include <ctime>
 #include <limits.h>
 #include <locale.h>
 
-
-
 // Функция для генерации случайной матрицы смежности
-void generateAdjacencyMatrix(int** graph, int size, int isDirected) {
+void generateAdjacencyMatrix(std::vector<std::vector<int>>& graph, int size, bool isDirected) {
     srand(time(NULL));
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
@@ -26,57 +26,55 @@ void generateAdjacencyMatrix(int** graph, int size, int isDirected) {
 }
 
 // Вывод матрицы смежности
-void printMatrix(int** graph, int size) {
-    printf("   ");
+void printMatrix(const std::vector<std::vector<int>>& graph, int size) {
+    std::cout << "   ";
     for (int i = 0; i < size; i++) {
-        printf("V%d  ", i + 1);
+        std::cout << "V" << i + 1 << "  ";
     }
-    printf("\n");
+    std::cout << "\n";
     for (int i = 0; i < size; i++) {
-        printf("V%d  ", i + 1);
+        std::cout << "V" << i + 1 << "  ";
         for (int j = 0; j < size; j++) {
-            printf("%d   ", graph[i][j]);
+            std::cout << graph[i][j] << "   ";
         }
-        printf("\n");
+        std::cout << "\n";
     }
 }
 
-// Поиск расстояний
-void bfs(int** graph, int size, int start, int* distances) {
-    int* visited = (int*)calloc(size, sizeof(int));
-    int* queue = (int*)malloc(size * sizeof(int));
-    int front = 0, rear = 0;
+// Поиск расстояний (поиск в ширину)
+void bfs(const std::vector<std::vector<int>>& graph, int size, int start, std::vector<int>& distances) {
+    std::vector<bool> visited(size, false);
+    std::queue<int> queue;
 
     // Инициализация начальной вершины
     for (int i = 0; i < size; i++) {
         distances[i] = INT_MAX;  // Установка начальных расстояний
     }
     distances[start] = 0;
-    queue[rear++] = start;
-    visited[start] = 1;
+    queue.push(start);
+    visited[start] = true;
 
-    while (front < rear) {
-        int current = queue[front++];
+    while (!queue.empty()) {
+        int current = queue.front();
+        queue.pop();
+
         for (int i = 0; i < size; i++) {
             if (graph[current][i] != 0 && !visited[i]) {
-                visited[i] = 1;
+                visited[i] = true;
                 distances[i] = distances[current] + graph[current][i];
-                queue[rear++] = i;
+                queue.push(i);
             }
         }
     }
-
-    free(visited);
-    free(queue);
 }
 
 // Вычисление радиуса и диаметра графа
-void calculateRadiusAndDiameter(int** graph, int size, int* radius, int* diameter) {
-    *radius = INT_MAX;
-    *diameter = 0;
+void calculateRadiusAndDiameter(const std::vector<std::vector<int>>& graph, int size, int& radius, int& diameter) {
+    radius = INT_MAX;
+    diameter = 0;
 
     for (int i = 0; i < size; i++) {
-        int* distances = (int*)malloc(size * sizeof(int));
+        std::vector<int> distances(size);
         bfs(graph, size, i, distances);
 
         int maxDistance = 0;
@@ -85,92 +83,43 @@ void calculateRadiusAndDiameter(int** graph, int size, int* radius, int* diamete
                 maxDistance = distances[j];
             }
         }
-        if (maxDistance < *radius) {
-            *radius = maxDistance;
+        if (maxDistance < radius) {
+            radius = maxDistance;
         }
-        if (maxDistance > *diameter) {
-            *diameter = maxDistance;
-        }
-
-        free(distances);
-    }
-}
-
-void findPeripheralAndCentralVertices(int** graph, int size, int* peripheralVertex, int* centralVertex) {
-    int* distances = (int*)malloc(size * sizeof(int));
-    int maxDistance, minMaxDistance = INT_MAX;
-
-    *peripheralVertex = -1; // Инициализация
-    *centralVertex = -1; // Инициализация
-
-    for (int i = 0; i < size; i++) {
-        bfs(graph, size, i, distances);
-        maxDistance = 0;
-
-        for (int j = 0; j < size; j++) {
-            if (distances[j] != INT_MAX && distances[j] > maxDistance) {
-                maxDistance = distances[j];
-            }
-        }
-
-        // Установка периферийной вершины
-        if (*peripheralVertex == -1 || maxDistance > distances[*peripheralVertex]) {
-            *peripheralVertex = i;
-        }
-
-        // Проверка на центральную вершину
-        if (maxDistance < minMaxDistance) {
-            minMaxDistance = maxDistance;
-            *centralVertex = i;
+        if (maxDistance > diameter) {
+            diameter = maxDistance;
         }
     }
-
-
-    free(distances);
 }
 
 int main() {
     setlocale(LC_ALL, "RUS");
 
-    int size, radius, diameter, peripheralVertex, centralVertex;
+    int size, radius, diameter;
 
-    printf("Введите размер графа (количество вершин): ");
-    scanf("%d", &size);
+    std::cout << "Введите количество вершин: ";
+    std::cin >> size;
 
     // Выделение памяти для матрицы смежности
-    int** graph = (int**)malloc(size * sizeof(int*));
-    for (int i = 0; i < size; i++) {
-        graph[i] = (int*)malloc(size * sizeof(int));
-    }
+    std::vector<std::vector<int>> graph(size, std::vector<int>(size));
 
     // Генерация и вывод неориентированного графа
-    printf("\nНеориентированный граф:\n\n");
-    generateAdjacencyMatrix(graph, size, 0);
+    std::cout << "\nНеориентированный граф:\n\n";
+    generateAdjacencyMatrix(graph, size, false);
     printMatrix(graph, size);
-
-    findPeripheralAndCentralVertices(graph, size, &peripheralVertex, &centralVertex);
-    printf("\nПериферийная вершина: V%d, Центральная вершина: V%d\n", peripheralVertex + 1, centralVertex + 1);
 
     // Вычисление радиуса и диаметра неориентированного графа
-    calculateRadiusAndDiameter(graph, size, &radius, &diameter);
-    printf("\nРадиус: %d, Диаметр: %d\n", radius, diameter);
+    calculateRadiusAndDiameter(graph, size, radius, diameter);
+    std::cout << "\nРадиус: " << radius << ", Диаметр: " << diameter << "\n";
 
     // Генерация и вывод ориентированного графа
-    printf("\nОриентированный граф:\n\n");
-    generateAdjacencyMatrix(graph, size, 1);
+    std::cout << "\nОриентированный граф:\n\n";
+    generateAdjacencyMatrix(graph, size, true);
     printMatrix(graph, size);
 
-    findPeripheralAndCentralVertices(graph, size, &peripheralVertex, &centralVertex);
-    printf("\nПериферийная вершина: V%d, Центральная вершина: V%d\n", peripheralVertex + 1, centralVertex + 1);
-
     // Вычисление радиуса и диаметра ориентированного графа
-    calculateRadiusAndDiameter(graph, size, &radius, &diameter);
-    printf("\nРадиус: %d, Диаметр: %d\n", radius, diameter);
-
-    for (int i = 0; i < size; i++) {
-        free(graph[i]);
-    }
-    free(graph);
+    calculateRadiusAndDiameter(graph, size, radius, diameter);
+    std::cout << "\nРадиус: " << radius << ", Диаметр: " << diameter << "\n";
 
     return 0;
 }
