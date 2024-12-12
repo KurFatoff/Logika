@@ -1,8 +1,9 @@
-﻿#define _CRT_SECURE_NO_WARNINGS
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <locale.h>
+﻿#include <iostream>
+#include <queue>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <locale>
 
 #define MAX_NODES 100
 
@@ -23,80 +24,80 @@ void generateAdjacencyMatrix(int graph[MAX_NODES][MAX_NODES], int nodes) {
 
 // Вывод матрицы
 void printAdjacencyMatrix(int graph[MAX_NODES][MAX_NODES], int nodes) {
-    printf("\nМатрица смежности:\n");
-    printf("   ");
+    std::cout << "\nМатрица смежности:\n";
+    std::cout << "   ";
     for (int i = 0; i < nodes; i++) {
-        printf("V%d  ", i + 1);
+        std::cout << "V" << i + 1 << "  ";
     }
-    printf("\n");
+    std::cout << "\n";
     for (int i = 0; i < nodes; i++) {
-        printf("V%d  ", i + 1);
+        std::cout << "V" << i + 1 << "  ";
         for (int j = 0; j < nodes; j++) {
-            printf("%d   ", graph[i][j]);
+            std::cout << graph[i][j] << "   ";
         }
-        printf("\n");
+        std::cout << "\n";
     }
 }
 
 // Обход в ширину для матрицы смежности
 void bfsMatrix(int graph[MAX_NODES][MAX_NODES], int nodes, int start) {
-    int visited[MAX_NODES] = { 0 };
-    int queue[MAX_NODES];
-    int front = 0, rear = 0;
+    std::vector<bool> visited(nodes, false);
+    std::queue<int> q;
 
-    visited[start] = 1;
-    queue[rear++] = start;
+    visited[start] = true;
+    q.push(start);
 
-    printf("\nОбход в ширину (матрица смежности): ");
-    while (front < rear) {
-        int current = queue[front++];
-        printf("%d ", current+1);
+    std::cout << "\nОбход в ширину (матрица смежности): ";
+    while (!q.empty()) {
+        int current = q.front();
+        q.pop();
+        std::cout << current + 1 << " ";
 
         for (int i = 0; i < nodes; i++) {
             if (graph[current][i] && !visited[i]) {
-                visited[i] = 1;
-                queue[rear++] = i;
+                visited[i] = true;
+                q.push(i);
             }
         }
     }
-    printf("\n");
+    std::cout << "\n";
 }
 
 // Вывод списка смежности
-void printAdjacencyList(int* adjList[], int adjSize[], int nodes) {
-    printf("\nСписок смежности:\n");
+void printAdjacencyList(std::vector<int> adjList[], int adjSize[], int nodes) {
+    std::cout << "\nСписок смежности:\n";
     for (int i = 0; i < nodes; i++) {
-        printf("%d: ", i+1);
+        std::cout << i + 1 << ": ";
         for (int j = 0; j < adjSize[i]; j++) {
-            printf("%d ", adjList[i][j]+1);
+            std::cout << adjList[i][j] + 1 << " ";
         }
-        printf("\n");
+        std::cout << "\n";
     }
 }
 
 // Обход в ширину для списка смежности
-void bfsAdjacencyList(int* adjList[], int adjSize[], int nodes, int start) {
-    int visited[MAX_NODES] = { 0 };
-    int queue[MAX_NODES];
-    int front = 0, rear = 0;
+void bfsAdjacencyList(std::vector<int> adjList[], int adjSize[], int nodes, int start) {
+    std::vector<bool> visited(nodes, false);
+    std::queue<int> q;
 
-    visited[start] = 1;
-    queue[rear++] = start;
+    visited[start] = true;
+    q.push(start);
 
-    printf("\nОбход в ширину (список смежности): ");
-    while (front < rear) {
-        int current = queue[front++];
-        printf("%d ", current+1);
+    std::cout << "\nОбход в ширину (список смежности): ";
+    while (!q.empty()) {
+        int current = q.front();
+        q.pop();
+        std::cout << current + 1 << " ";
 
         for (int i = 0; i < adjSize[current]; i++) {
             int neighbor = adjList[current][i];
             if (!visited[neighbor]) {
-                visited[neighbor] = 1;
-                queue[rear++] = neighbor;
+                visited[neighbor] = true;
+                q.push(neighbor);
             }
         }
     }
-    printf("\n");
+    std::cout << "\n";
 }
 
 int main() {
@@ -105,11 +106,11 @@ int main() {
     int graph[MAX_NODES][MAX_NODES];
     int nodes;
 
-    printf("Введите количество вершин графа (максимум %d): ", MAX_NODES);
-    scanf("%d", &nodes);
+    std::cout << "Введите количество вершин графа (максимум " << MAX_NODES << "): ";
+    std::cin >> nodes;
 
     if (nodes <= 0 || nodes > MAX_NODES) {
-        printf("Некорректное количество вершин. Программа завершена.\n");
+        std::cout << "Некорректное количество вершин. Программа завершена.\n";
         return 1;
     }
 
@@ -119,14 +120,14 @@ int main() {
     bfsMatrix(graph, nodes, 0);
 
     // Построение списка смежности
-    int* adjList[MAX_NODES];
+    std::vector<int> adjList[MAX_NODES];
     int adjSize[MAX_NODES] = { 0 };
 
     for (int i = 0; i < nodes; i++) {
-        adjList[i] = (int*)malloc(nodes * sizeof(int));
         for (int j = 0; j < nodes; j++) {
             if (graph[i][j]) {
-                adjList[i][adjSize[i]++] = j;
+                adjList[i].push_back(j);
+                adjSize[i]++;
             }
         }
     }
@@ -134,10 +135,6 @@ int main() {
     printAdjacencyList(adjList, adjSize, nodes);
 
     bfsAdjacencyList(adjList, adjSize, nodes, 0);
-
-    for (int i = 0; i < nodes; i++) {
-        free(adjList[i]);
-    }
 
     return 0;
 }
